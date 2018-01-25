@@ -7,6 +7,6 @@ setup(
 
 	install_requires=[
 		'reportlab',
-		'PIL',
+		'pillow',
 	]
 )
