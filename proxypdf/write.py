@@ -6,9 +6,11 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 
+
 class ProxyWriter(object):
 	_PROXY_WIDTH = 2.5*inch
 	_PROXY_HEIGHT = 3.5*inch
+
 	def __init__(
 		self,
 		file,
@@ -22,12 +24,19 @@ class ProxyWriter(object):
 		)
 		self._pagesize = page_size
 		self._margin_size = margin_size*inch
+
+		if self._margin_size * 2 + self._PROXY_WIDTH > self._pagesize[0]:
+			self._margin_size = (self._pagesize[0] - self._PROXY_WIDTH) / 2
+		if self._margin_size * 2 + self._PROXY_HEIGHT > self._pagesize[1]:
+			self._margin_size = (self._pagesize[1] - self._PROXY_HEIGHT) / 2
+
 		self._card_margin_size = card_margin_size*inch
-		#todo ceil margin space for at least one card
 		self._cursor = None #type: t.Tuple[float, float]
 		self._reset_cursor()
+
 	def _reset_cursor(self):
 		self._cursor = (self._margin_size, self._pagesize[1] - self._margin_size)
+
 	def add_proxy(self, image: t.Union[ImageReader, str, Image.Image]):
 		self._canvas.drawImage(
 			ImageReader(image) if isinstance(image, Image.Image) else image,
@@ -45,10 +54,12 @@ class ProxyWriter(object):
 				self._cursor = (self._margin_size, self._cursor[1]-ProxyWriter._PROXY_HEIGHT-self._card_margin_size)
 		else:
 			self._cursor = (self._cursor[0]+ProxyWriter._PROXY_WIDTH+self._card_margin_size, self._cursor[1])
+
 	def save(self):
 		self._canvas.showPage()
 		self._canvas.save()
-		
+
+
 def save_proxy_pdf(
 	file: t.Union[t.BinaryIO, str],
 	images: t.Iterable[t.Union[ImageReader, str, Image.Image]],
