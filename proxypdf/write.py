@@ -41,19 +41,28 @@ class ProxyWriter(object):
 		self._canvas.drawImage(
 			ImageReader(image) if isinstance(image, Image.Image) else image,
 			self._cursor[0],
-			self._cursor[1]-ProxyWriter._PROXY_HEIGHT,
+			self._cursor[1] - ProxyWriter._PROXY_HEIGHT,
 			ProxyWriter._PROXY_WIDTH,
 			ProxyWriter._PROXY_HEIGHT,
-			mask='auto',
+			mask = 'auto',
 		)
-		if self._cursor[0]+(ProxyWriter._PROXY_WIDTH+self._card_margin_size)*2 > self._pagesize[0]-self._margin_size:
-			if self._cursor[1]-(ProxyWriter._PROXY_HEIGHT-self._card_margin_size)*2 < self._margin_size:
+
+		if (
+			self._cursor[0] + (ProxyWriter._PROXY_WIDTH + self._card_margin_size) * 2
+			> self._pagesize[0] - self._margin_size
+		):
+			if (
+				self._cursor[1] - (ProxyWriter._PROXY_HEIGHT - self._card_margin_size) * 2
+				< self._margin_size
+			):
 				self._canvas.showPage()
 				self._reset_cursor()
+
 			else:
-				self._cursor = (self._margin_size, self._cursor[1]-ProxyWriter._PROXY_HEIGHT-self._card_margin_size)
+				self._cursor = (self._margin_size, self._cursor[1]-ProxyWriter._PROXY_HEIGHT - self._card_margin_size)
+
 		else:
-			self._cursor = (self._cursor[0]+ProxyWriter._PROXY_WIDTH+self._card_margin_size, self._cursor[1])
+			self._cursor = (self._cursor[0]+ProxyWriter._PROXY_WIDTH + self._card_margin_size, self._cursor[1])
 
 	def save(self):
 		self._canvas.showPage()
@@ -72,6 +81,8 @@ def save_proxy_pdf(
 			margin_size = margin_size,
 			card_margin_size = card_margin_size,
 		)
+
 		for image in images:
 			proxy_writer.add_proxy(image)
+
 		proxy_writer.save()
