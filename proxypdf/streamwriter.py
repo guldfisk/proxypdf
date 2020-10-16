@@ -139,6 +139,7 @@ class StreamProxyWriter(BaseProxyWriter):
         margin_size: float = 0.1,
         card_margin_size: float = 0.0,
     ):
+        self._file = file
         self._page_size = page_size
         self._margin_size = margin_size * inch
         self._card_margin_size = card_margin_size
@@ -162,7 +163,6 @@ class StreamProxyWriter(BaseProxyWriter):
         self._cursor: t.Optional[t.Tuple[float, float]] = None
 
         self._reset_cursor()
-        self._open(file)
 
     def _reset_cursor(self):
         self._cursor = (self._margin_size, self._page_size[1] - self._margin_size)
@@ -314,8 +314,8 @@ class StreamProxyWriter(BaseProxyWriter):
         for _ in range(amount):
             self._add_proxy(form)
 
-    def _open(self, file: t.Union[str, t.IO[bytes]]):
-        self._stream = open(file, 'wb') if isinstance(file, str) else file
+    def open(self):
+        self._stream = open(self._file, 'wb') if isinstance(self._file, str) else self._file
 
         self._stream.write(b'%PDF-1.3\n%cool beans\n')
 
