@@ -1,6 +1,5 @@
-§
 .idea/
-/proxypdf/test.py
-proxypdf/13.png
-proxypdf/__pycache__/
-proxypdf/out.pdf
+test.py
+__pycache__
+out/
+in/
