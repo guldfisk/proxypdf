@@ -138,11 +138,13 @@ class StreamProxyWriter(BaseProxyWriter):
         page_size: t.Tuple[float, float] = A4,
         margin_size: float = 0.1,
         card_margin_size: float = 0.0,
+        close_stream: bool = True
     ):
         self._file = file
         self._page_size = page_size
         self._margin_size = margin_size * inch
         self._card_margin_size = card_margin_size
+        self._close_stream = close_stream
 
         self._stream: t.Optional[t.IO[bytes]] = None
 
@@ -356,10 +358,12 @@ class StreamProxyWriter(BaseProxyWriter):
         self._pages_root.write(self._stream)
 
         self._write_tail()
-        self._stream.close()
+        if self._close_stream:
+            self._stream.close()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_tb is not None:
-            self._stream.close()
+            if self._close_stream:
+                self._stream.close()
         else:
             self.save()
