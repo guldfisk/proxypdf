@@ -310,6 +310,8 @@ class StreamProxyWriter(BaseProxyWriter):
             self._cursor = (self._cursor[0] + self._PROXY_WIDTH + self._card_margin_size, self._cursor[1])
 
     def add_proxy(self, image: Image.Image, amount: int = 1) -> None:
+        if amount <= 0:
+            return
         form = self._add_image_form(image)
         for _ in range(amount):
             self._add_proxy(form)
