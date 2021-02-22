@@ -239,7 +239,6 @@ class StreamProxyWriter(BaseProxyWriter):
                                     ),
                                 }
                             ),
-
                         }
                     )
                 )
