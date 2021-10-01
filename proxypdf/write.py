@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import typing as t
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from PIL import Image
 from reportlab.lib.utils import ImageReader
@@ -10,7 +10,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 
 
-class BaseProxyWriter(ABC):
+class BaseProxyWriter(t.ContextManager):
     _PROXY_WIDTH = 2.5 * inch
     _PROXY_HEIGHT = 3.5 * inch
 
