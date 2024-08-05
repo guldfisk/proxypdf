@@ -4,10 +4,10 @@ import typing as t
 from abc import abstractmethod
 
 from PIL import Image
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
 
 
 class BaseProxyWriter(t.ContextManager):
@@ -36,7 +36,6 @@ class BaseProxyWriter(t.ContextManager):
 
 
 class ProxyWriter(BaseProxyWriter):
-
     def __init__(
         self,
         file: t.Union[str, t.IO[bytes]],
@@ -61,7 +60,7 @@ class ProxyWriter(BaseProxyWriter):
     def open(self) -> None:
         self._canvas = canvas.Canvas(
             self._file,
-            pagesize = self._page_size,
+            pagesize=self._page_size,
         )
 
     def _reset_cursor(self):
@@ -74,17 +73,11 @@ class ProxyWriter(BaseProxyWriter):
             self._cursor[1] - self._PROXY_HEIGHT,
             self._PROXY_WIDTH,
             self._PROXY_HEIGHT,
-            mask = 'auto',
+            mask="auto",
         )
 
-        if (
-            self._cursor[0] + (self._PROXY_WIDTH + self._card_margin_size) * 2
-            > self._page_size[0] - self._margin_size
-        ):
-            if (
-                self._cursor[1] - (self._PROXY_HEIGHT - self._card_margin_size) * 2
-                < self._margin_size
-            ):
+        if self._cursor[0] + (self._PROXY_WIDTH + self._card_margin_size) * 2 > self._page_size[0] - self._margin_size:
+            if self._cursor[1] - (self._PROXY_HEIGHT - self._card_margin_size) * 2 < self._margin_size:
                 self._canvas.showPage()
                 self._reset_cursor()
 
@@ -98,46 +91,16 @@ class ProxyWriter(BaseProxyWriter):
         self._canvas.save()
 
 
-# class AnnotatedProxyWriter(BaseProxyWriter):
-#
-#     def __init__(
-#         self,
-#         file,
-#         page_size: t.Tuple[float, float] = A4,
-#         margin_size: float = 0.1,
-#         card_margin_size: float = 0.0,
-#     ):
-#         self._canvas = canvas.Canvas(
-#             file,
-#             pagesize = page_size,
-#         )
-#         self._pagesize = page_size
-#         self._margin_size = margin_size * inch
-#
-#         if self._margin_size * 2 + self._PROXY_WIDTH > self._pagesize[0]:
-#             self._margin_size = (self._pagesize[0] - self._PROXY_WIDTH) / 2
-#
-#         if self._margin_size * 2 + self._PROXY_HEIGHT > self._pagesize[1]:
-#             self._margin_size = (self._pagesize[1] - self._PROXY_HEIGHT) / 2
-#
-#         self._card_margin_size = card_margin_size * inch
-#         self._cursor: t.Optional[t.Tuple[float, float]] = None
-#         self._reset_cursor()
-#
-#     def _reset_cursor(self):
-#         self._cursor = (self._margin_size, self._pagesize[1] - self._margin_size)
-
-
 def _save_proxy_pdf(
     file: t.BinaryIO,
     images: t.Iterable[t.Union[ImageReader, str, Image.Image]],
     margin_size: float = 0.1,
-    card_margin_size = 0.0,
+    card_margin_size=0.0,
 ):
     with ProxyWriter(
-        file = file,
-        margin_size = margin_size,
-        card_margin_size = card_margin_size,
+        file=file,
+        margin_size=margin_size,
+        card_margin_size=card_margin_size,
     ) as writer:
         for image in images:
             writer.add_proxy(image)
@@ -147,10 +110,10 @@ def save_proxy_pdf(
     file: t.Union[t.BinaryIO, str],
     images: t.Iterable[t.Union[ImageReader, str, Image.Image]],
     margin_size: float = 0.1,
-    card_margin_size = 0.0,
+    card_margin_size=0.0,
 ):
     if isinstance(file, str):
-        with open(file, 'wb') as f:
+        with open(file, "wb") as f:
             _save_proxy_pdf(
                 f,
                 images,

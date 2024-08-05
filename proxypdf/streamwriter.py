@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import base64
 import typing as t
 import zlib
-import base64
 from abc import ABC, abstractmethod
 
 from PIL import Image
@@ -19,14 +19,13 @@ def b(v: B) -> bytes:
     if isinstance(v, bytes):
         return v
     if isinstance(v, (int, float)):
-        return str(v).encode('ascii')
+        return str(v).encode("ascii")
     if isinstance(v, str):
-        return v.encode('ascii')
+        return v.encode("ascii")
     raise ValueError()
 
 
 class PdfObjectBase(ABC):
-
     @abstractmethod
     def write(self, stream: t.IO[bytes]) -> None:
         pass
@@ -36,7 +35,6 @@ Writeable = t.Union[B, PdfObjectBase]
 
 
 class PdfDict(PdfObjectBase):
-
     def __init__(self, values: t.Mapping[bytes, Writeable]):
         self._values = values
 
@@ -45,19 +43,18 @@ class PdfDict(PdfObjectBase):
         return self._values
 
     def write(self, stream: t.IO[bytes]) -> None:
-        stream.write(b'<<\n')
+        stream.write(b"<<\n")
         for k, v in self._values.items():
-            stream.write(b'    ' + k + b' ')
+            stream.write(b"    " + k + b" ")
             if isinstance(v, PdfObjectBase):
                 v.write(stream)
             else:
                 stream.write(b(v))
-            stream.write(b'\n')
-        stream.write(b'>>\n')
+            stream.write(b"\n")
+        stream.write(b">>\n")
 
 
 class PdfStream(PdfObjectBase):
-
     def __init__(self, content: bytes, values: t.Optional[t.Mapping[bytes, Writeable]] = None):
         self._content: bytes = content
         self._values = values or {}
@@ -66,37 +63,35 @@ class PdfStream(PdfObjectBase):
         encoded = b(base64.a85encode(zlib.compress(self._content)))
         PdfDict(
             {
-                b'/Filter': PdfList([b'/ASCII85Decode', b'/FlateDecode']),
-                b'/Length': b(len(encoded)),
+                b"/Filter": PdfList([b"/ASCII85Decode", b"/FlateDecode"]),
+                b"/Length": b(len(encoded)),
                 **self._values,
             }
         ).write(stream)
-        stream.write(b'stream\n')
+        stream.write(b"stream\n")
         stream.write(encoded)
-        stream.write(b'\nendstream\n')
+        stream.write(b"\nendstream\n")
 
 
 class PdfList(PdfObjectBase):
-
     def __init__(self, values: t.Sequence[Writeable]):
         self._values = values
 
     def write(self, stream: t.IO[bytes]) -> None:
-        stream.write(b'[ ')
+        stream.write(b"[ ")
         for v in self._values:
             if isinstance(v, PdfObjectBase):
                 v.write(stream)
             else:
                 stream.write(b(v))
-            stream.write(b' ')
-        stream.write(b']')
+            stream.write(b" ")
+        stream.write(b"]")
 
 
-O = t.TypeVar('O', bound = PdfObjectBase)
+O = t.TypeVar("O", bound=PdfObjectBase)
 
 
 class IndirectObject(t.Generic[O], PdfObjectBase):
-
     def __init__(self, content: O):
         super().__init__()
         self._content = content
@@ -114,14 +109,14 @@ class IndirectObject(t.Generic[O], PdfObjectBase):
 
     @property
     def reference(self) -> bytes:
-        return b(self.number) + b' 0 R'
+        return b(self.number) + b" 0 R"
 
     def write(self, stream: t.IO[bytes]) -> None:
         self._bytes_offset = stream.tell()
         stream.write(b(self.number))
-        stream.write(b' 0 obj\n')
+        stream.write(b" 0 obj\n")
         self._content.write(stream)
-        stream.write(b'endobj\n')
+        stream.write(b"endobj\n")
         del self._content
 
     @property
@@ -130,7 +125,6 @@ class IndirectObject(t.Generic[O], PdfObjectBase):
 
 
 class StreamProxyWriter(BaseProxyWriter):
-
     def __init__(
         self,
         file: t.Union[str, t.IO[bytes]],
@@ -138,7 +132,7 @@ class StreamProxyWriter(BaseProxyWriter):
         page_size: t.Tuple[float, float] = A4,
         margin_size: float = 0.1,
         card_margin_size: float = 0.0,
-        close_stream: bool = True
+        close_stream: bool = True,
     ):
         self._file = file
         self._page_size = page_size
@@ -172,28 +166,26 @@ class StreamProxyWriter(BaseProxyWriter):
     def _write_tail(self) -> None:
         xref_offset = self._stream.tell()
         object_count = b(len(self._objects) + 1)
-        self._stream.write(b'xref\n')
-        self._stream.write(b'0 ')
+        self._stream.write(b"xref\n")
+        self._stream.write(b"0 ")
         self._stream.write(object_count)
-        self._stream.write(b'\n')
-        self._stream.write(b'0000000000 65535 f \n')
+        self._stream.write(b"\n")
+        self._stream.write(b"0000000000 65535 f \n")
         for pdf_object in self._objects:
-            self._stream.write(
-                str(pdf_object.byte_offset).rjust(10, '0').encode('ASCII')
-            )
-            self._stream.write(b' 00000 n \n')
+            self._stream.write(str(pdf_object.byte_offset).rjust(10, "0").encode("ASCII"))
+            self._stream.write(b" 00000 n \n")
 
-        self._stream.write(b'trailer\n')
+        self._stream.write(b"trailer\n")
         PdfDict(
             {
-                b'/Size': object_count,
-                b'/Root': self._root.reference,
+                b"/Size": object_count,
+                b"/Root": self._root.reference,
             }
         ).write(self._stream)
 
-        self._stream.write(b'startxref\n')
+        self._stream.write(b"startxref\n")
         self._stream.write(b(xref_offset))
-        self._stream.write(b'\n%%EOF\n')
+        self._stream.write(b"\n%%EOF\n")
 
     def _add_object(self, pdf_object: IndirectObject[O], write: bool = True) -> IndirectObject[O]:
         self._object_counter += 1
@@ -209,10 +201,10 @@ class StreamProxyWriter(BaseProxyWriter):
         content_stream = self._add_object(
             IndirectObject(
                 PdfStream(
-                    b'1 0 0 1 0 0 cm ' + b' '.join(
-                        b'q 180 0 0 252 ' + b(x) + b' ' + b(y) + b' cm /FormXob.' + b(idx + 1) + b' Do Q'
-                            for idx, (form, (x, y)) in
-                            enumerate(self._proxy_positions)
+                    b"1 0 0 1 0 0 cm "
+                    + b" ".join(
+                        b"q 180 0 0 252 " + b(x) + b" " + b(y) + b" cm /FormXob." + b(idx + 1) + b" Do Q"
+                        for idx, (form, (x, y)) in enumerate(self._proxy_positions)
                     )
                 )
             )
@@ -223,18 +215,17 @@ class StreamProxyWriter(BaseProxyWriter):
                 IndirectObject(
                     PdfDict(
                         {
-                            b'/MediaBox': PdfList([0, 0, *self._page_size]),
-                            b'/Type': b'/Page',
-                            b'/Parent': self._pages_root.reference,
-                            b'/Contents': content_stream.reference,
-                            b'/Resources': PdfDict(
+                            b"/MediaBox": PdfList([0, 0, *self._page_size]),
+                            b"/Type": b"/Page",
+                            b"/Parent": self._pages_root.reference,
+                            b"/Contents": content_stream.reference,
+                            b"/Resources": PdfDict(
                                 {
-                                    b'/ProcSet': PdfList([b'/PDF', b'/Text', b'/ImageB', b'/ImageC', b'/ImageI']),
-                                    b'/XObject': PdfDict(
+                                    b"/ProcSet": PdfList([b"/PDF", b"/Text", b"/ImageB", b"/ImageC", b"/ImageI"]),
+                                    b"/XObject": PdfDict(
                                         {
-                                            b'/FormXob.' + b(idx + 1): form.reference
-                                            for idx, (form, position) in
-                                            enumerate(self._proxy_positions)
+                                            b"/FormXob." + b(idx + 1): form.reference
+                                            for idx, (form, position) in enumerate(self._proxy_positions)
                                         }
                                     ),
                                 }
@@ -252,16 +243,16 @@ class StreamProxyWriter(BaseProxyWriter):
         mask = self._add_object(
             IndirectObject(
                 PdfStream(
-                    image.getchannel('A').tobytes(),
+                    image.getchannel("A").tobytes(),
                     {
-                        b'/BitsPerComponent': b'8',
-                        b'/ColorSpace': b'/DeviceGray',
-                        b'/Decode': PdfList([b'0', b'1']),
-                        b'/Height': b(image.height),
-                        b'/Width': b(image.width),
-                        b'/Subtype': b'/Image',
-                        b'/Type': b'/XObject',
-                    }
+                        b"/BitsPerComponent": b"8",
+                        b"/ColorSpace": b"/DeviceGray",
+                        b"/Decode": PdfList([b"0", b"1"]),
+                        b"/Height": b(image.height),
+                        b"/Width": b(image.width),
+                        b"/Subtype": b"/Image",
+                        b"/Type": b"/XObject",
+                    },
                 )
             )
         )
@@ -269,16 +260,16 @@ class StreamProxyWriter(BaseProxyWriter):
         return self._add_object(
             IndirectObject(
                 PdfStream(
-                    image.convert('RGB').tobytes(),
+                    image.convert("RGB").tobytes(),
                     {
-                        b'/BitsPerComponent': b'8',
-                        b'/ColorSpace': b'/DeviceRGB',
-                        b'/Height': b(image.height),
-                        b'/Width': b(image.width),
-                        b'/Subtype': b'/Image',
-                        b'/Type': b'/XObject',
-                        b'/SMask': mask.reference,
-                    }
+                        b"/BitsPerComponent": b"8",
+                        b"/ColorSpace": b"/DeviceRGB",
+                        b"/Height": b(image.height),
+                        b"/Width": b(image.width),
+                        b"/Subtype": b"/Image",
+                        b"/Type": b"/XObject",
+                        b"/SMask": mask.reference,
+                    },
                 )
             )
         )
@@ -290,18 +281,12 @@ class StreamProxyWriter(BaseProxyWriter):
                 (
                     self._cursor[0],
                     self._cursor[1] - self._PROXY_HEIGHT,
-                )
+                ),
             )
         )
 
-        if (
-            self._cursor[0] + (self._PROXY_WIDTH + self._card_margin_size) * 2
-            > self._page_size[0] - self._margin_size
-        ):
-            if (
-                self._cursor[1] - (self._PROXY_HEIGHT - self._card_margin_size) * 2
-                < self._margin_size
-            ):
+        if self._cursor[0] + (self._PROXY_WIDTH + self._card_margin_size) * 2 > self._page_size[0] - self._margin_size:
+            if self._cursor[1] - (self._PROXY_HEIGHT - self._card_margin_size) * 2 < self._margin_size:
                 self._flush_page()
 
             else:
@@ -318,25 +303,21 @@ class StreamProxyWriter(BaseProxyWriter):
             self._add_proxy(form)
 
     def open(self):
-        self._stream = open(self._file, 'wb') if isinstance(self._file, str) else self._file
+        self._stream = open(self._file, "wb") if isinstance(self._file, str) else self._file
 
-        self._stream.write(b'%PDF-1.3\n%cool beans\n')
+        self._stream.write(b"%PDF-1.3\n%cool beans\n")
 
         self._pages_root = self._add_object(
-            IndirectObject(
-                PdfDict(
-                    {}
-                )
-            ),
-            write = False,
+            IndirectObject(PdfDict({})),
+            write=False,
         )
 
         self._root = self._add_object(
             IndirectObject(
                 PdfDict(
                     {
-                        b'/Type': b'/Catalog',
-                        b'/Pages': self._pages_root.reference,
+                        b"/Type": b"/Catalog",
+                        b"/Pages": self._pages_root.reference,
                     }
                 )
             )
@@ -348,9 +329,9 @@ class StreamProxyWriter(BaseProxyWriter):
 
         self._pages_root.content = PdfDict(
             {
-                b'/Type': b'/Pages',
-                b'/Count': b(len(self._pages)),
-                b'/Kids': PdfList([page.reference for page in self._pages]),
+                b"/Type": b"/Pages",
+                b"/Count": b(len(self._pages)),
+                b"/Kids": PdfList([page.reference for page in self._pages]),
             }
         )
 
