@@ -18,7 +18,7 @@ authors = ["None"]
 [tool.poetry.dependencies]
 python = "~3.9"
 reportlab = "~4.0"
-Pillow = "~9.4"
+Pillow = "~10.3"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6.1"
